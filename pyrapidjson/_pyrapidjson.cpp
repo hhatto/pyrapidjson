@@ -15,20 +15,8 @@
 #define _info(format,...) printf("[INFO]" format,__VA_ARGS__)
 #endif
 
-typedef struct {
-    PyObject *stack;
-    unsigned int size;
-    unsigned int used;
-} _pyrapidjson_stack;
-
-typedef struct {
-    PyObject *root;
-    int offset;
-} _pyrapidjson_ctx;
-
-static _pyrapidjson_ctx _ctx;
-static PyObject* doc2pyobj(_pyrapidjson_ctx *, rapidjson::Document&);
-static PyObject* _get_pyobj_from_object(_pyrapidjson_ctx *ctx,
+static PyObject* doc2pyobj(rapidjson::Document&);
+static PyObject* _get_pyobj_from_object(
         rapidjson::Value::ConstMemberIterator& doc, PyObject *root,
         const char *key);
 
@@ -42,7 +30,6 @@ static inline void
 _set_pyobj(PyObject *parent, PyObject *child, const char *key)
 {
     if (child && !parent) {
-        //ctx->root = child;
         return;
     }
 
@@ -61,8 +48,7 @@ _set_pyobj(PyObject *parent, PyObject *child, const char *key)
 }
 
 static PyObject *
-_get_pyobj_from_array(_pyrapidjson_ctx *ctx,
-                      rapidjson::Value::ConstValueIterator& doc,
+_get_pyobj_from_array(rapidjson::Value::ConstValueIterator& doc,
                       PyObject *root)
 {
     PyObject *obj;
@@ -72,14 +58,14 @@ _get_pyobj_from_array(_pyrapidjson_ctx *ctx,
         obj = PyDict_New();
         for (rapidjson::Value::ConstMemberIterator itr = doc->MemberBegin();
              itr != doc->MemberEnd(); ++itr) {
-            _get_pyobj_from_object(ctx, itr, obj, itr->name.GetString());
+            _get_pyobj_from_object(itr, obj, itr->name.GetString());
         }
         break;
     case rapidjson::kArrayType:
         obj = PyList_New(0);
         for (rapidjson::Value::ConstValueIterator itr = doc->Begin();
              itr != doc->End(); ++itr) {
-            _get_pyobj_from_array(ctx, itr, obj);
+            _get_pyobj_from_array(itr, obj);
         }
         break;
     case rapidjson::kTrueType:
@@ -115,8 +101,7 @@ _get_pyobj_from_array(_pyrapidjson_ctx *ctx,
 }
 
 static PyObject *
-_get_pyobj_from_object(_pyrapidjson_ctx *ctx,
-                       rapidjson::Value::ConstMemberIterator& doc,
+_get_pyobj_from_object(rapidjson::Value::ConstMemberIterator& doc,
                        PyObject *root,
                        const char *key)
 {
@@ -127,14 +112,14 @@ _get_pyobj_from_object(_pyrapidjson_ctx *ctx,
         obj = PyDict_New();
         for (rapidjson::Value::ConstMemberIterator itr = doc->value.MemberBegin();
              itr != doc->value.MemberEnd(); ++itr) {
-            _get_pyobj_from_object(ctx, itr, obj, itr->name.GetString());
+            _get_pyobj_from_object(itr, obj, itr->name.GetString());
         }
         break;
     case rapidjson::kArrayType:
         obj = PyList_New(0);
         for (rapidjson::Value::ConstValueIterator itr = doc->value.Begin();
              itr != doc->value.End(); ++itr) {
-            _get_pyobj_from_array(ctx, itr, obj);
+            _get_pyobj_from_array(itr, obj);
         }
         break;
     case rapidjson::kTrueType:
@@ -169,7 +154,7 @@ _get_pyobj_from_object(_pyrapidjson_ctx *ctx,
 }
 
 static PyObject *
-doc2pyobj(_pyrapidjson_ctx *ctx, rapidjson::Document& doc)
+doc2pyobj(rapidjson::Document& doc)
 {
     PyObject *root;
 
@@ -177,7 +162,7 @@ doc2pyobj(_pyrapidjson_ctx *ctx, rapidjson::Document& doc)
         root = PyList_New(0);
         for (rapidjson::Value::ConstValueIterator itr = doc.Begin();
              itr != doc.End(); ++itr) {
-            _get_pyobj_from_array(ctx, itr, root);
+            _get_pyobj_from_array(itr, root);
         }
     }
     else {
@@ -185,7 +170,7 @@ doc2pyobj(_pyrapidjson_ctx *ctx, rapidjson::Document& doc)
         root = PyDict_New();
         for (rapidjson::Value::ConstMemberIterator itr = doc.MemberBegin();
              itr != doc.MemberEnd(); ++itr) {
-            _get_pyobj_from_object(ctx, itr, root, itr->name.GetString());
+            _get_pyobj_from_object(itr, root, itr->name.GetString());
         }
     }
 
@@ -205,8 +190,6 @@ pyrapidjson_loads(PyObject *self, PyObject *args, PyObject *kwargs)
     /* Parse arguments */
     if (!PyArg_ParseTupleAndKeywords(args, kwargs, "s", kwlist, &text))
         return NULL;
-
-    memset(&_ctx, 0, sizeof(_pyrapidjson_ctx));
 
     doc.Parse<0>(text);
 
@@ -240,7 +223,7 @@ pyrapidjson_loads(PyObject *self, PyObject *args, PyObject *kwargs)
         }
     }
 
-    return doc2pyobj(&_ctx, doc);
+    return doc2pyobj(doc);
 }
 
 
@@ -259,7 +242,7 @@ static struct PyModuleDef pyrapidjson_module_def = {
     PyrapidjsonMethods,
 };
 PyObject *
-PyInit_pyjsmn(void)
+PyInit_rapidjson(void)
 #else
 
 PyMODINIT_FUNC
