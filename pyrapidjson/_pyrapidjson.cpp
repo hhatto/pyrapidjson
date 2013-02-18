@@ -6,6 +6,8 @@
 
 #if PY_MAJOR_VERSION >= 3
 #define PY3
+#define PyInt_FromLong PyLong_FromLong
+#define PyInt_FromString PyLong_FromString
 #endif
 
 #define DEFAULT_TOKEN_SIZE 1024
@@ -201,6 +203,8 @@ pyrapidjson_loads(PyObject *self, PyObject *args, PyObject *kwargs)
             return PyBool_FromLong(0);
         case 'n':
             Py_RETURN_NONE;
+        case '"':
+            return PyString_FromStringAndSize(text + 1, strlen(text) - 2);
         default:
             is_float = 0;
             for (offset = 0; offset < strlen(text); offset++) {
@@ -217,7 +221,7 @@ pyrapidjson_loads(PyObject *self, PyObject *args, PyObject *kwargs)
                 pyjson = PyFloat_FromDouble(atof(text));
             }
             else {
-                pyjson = PyLong_FromLong(atol(text));
+                pyjson = PyInt_FromString(text, NULL, NULL);
             }
             return pyjson;
         }
