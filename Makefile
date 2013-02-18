@@ -8,7 +8,7 @@ test:
 
 clean:
 	rm -rf build *.egg-info dist temp
-	rm -rf tests/*.pyc
+	rm -rf test/*.pyc
 
 pypireg:
 	python setup.py register
