@@ -12,5 +12,10 @@ sys.path.insert(0, os.path.dirname(test_root))
 sys.path.insert(0, test_root)
 test_names = [os.path.basename(name)[:-3] for name in test_files]
 
-suite = unittest.defaultTestLoader.loadTestsFromNames(test_names)
-unittest.TextTestRunner().run(suite)
+if __name__ == '__main__':
+    suite = unittest.defaultTestLoader.loadTestsFromNames(test_names)
+    ret = unittest.TextTestRunner().run(suite)
+    retcode = 0
+    if ret.failures or ret.errors:
+        retcode = 1
+    sys.exit(retcode)
