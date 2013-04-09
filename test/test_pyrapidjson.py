@@ -76,3 +76,11 @@ class TestDecodeComplex(unittest.TestCase):
         text = """{"test": {"hello": "world"}}"""
         ret = rapidjson.loads(text)
         self.assertEqual(ret, {"test": {"hello": "world"}})
+
+
+class TestEncodeSimple(unittest.TestCase):
+
+    def test_integer(self):
+        jsonobj = 1
+        ret = rapidjson.dumps(jsonobj)
+        self.assertEqual(ret, 1)

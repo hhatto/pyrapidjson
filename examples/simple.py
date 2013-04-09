@@ -28,3 +28,6 @@ print(rapidjson.loads("null"))
 
 print("=" * 30)
 print(rapidjson.loads("2.14"))
+
+print("=" * 30)
+print(rapidjson.dumps([1, None]))

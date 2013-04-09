@@ -1,8 +1,11 @@
 #include <Python.h>
 #include <string.h>
+#include <cstdio>
+#include <sstream>
 
 #include "rapidjson/rapidjson.h"
 #include "rapidjson/document.h"
+#include "rapidjson/prettywriter.h"
 
 #if PY_MAJOR_VERSION >= 3
 #define PY3
@@ -27,6 +30,16 @@ static PyObject* _get_pyobj_from_object(
 PyDoc_STRVAR(pyrapidjson__doc__, "Python binding for rapidjson");
 #endif
 PyDoc_STRVAR(pyrapidjson_loads__doc__, "Decoding JSON");
+PyDoc_STRVAR(pyrapidjson_dumps__doc__, "Encoding JSON");
+
+
+struct _OutputStringStream : public std::ostringstream {
+	typedef char Ch;
+
+	void Put(char c) {
+		put(c);
+	}
+};
 
 static inline void
 _set_pyobj(PyObject *parent, PyObject *child, const char *key)
@@ -82,6 +95,7 @@ _get_pyobj_from_array(rapidjson::Value::ConstValueIterator& doc,
         break;
     case rapidjson::kNumberType:
         if (doc->IsDouble()) {
+            printf("%f\n", doc->GetDouble());
             obj = PyFloat_FromDouble(doc->GetDouble());
         }
         else {
@@ -136,6 +150,7 @@ _get_pyobj_from_object(rapidjson::Value::ConstMemberIterator& doc,
         break;
     case rapidjson::kNumberType:
         if (doc->value.IsDouble()) {
+            printf("%f\n", doc->value.GetDouble());
             obj = PyFloat_FromDouble(doc->value.GetDouble());
         }
         else {
@@ -231,9 +246,37 @@ pyrapidjson_loads(PyObject *self, PyObject *args, PyObject *kwargs)
 }
 
 
+static PyObject *
+pyrapidjson_dumps(PyObject *self, PyObject *args, PyObject *kwargs)
+{
+    static char *kwlist[] = {"obj", NULL};
+    PyObject *pyjson;
+    rapidjson::Document doc;
+
+    /* Parse arguments */
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O", kwlist, &pyjson))
+        return NULL;
+
+    // FIXME
+    rapidjson::Value _s;
+    char _buf[10] = "world";
+    _s.SetString(_buf, 5, doc.GetAllocator());
+    doc.AddMember("hello", _s, doc.GetAllocator());
+
+    _OutputStringStream ss;
+    rapidjson::Writer<_OutputStringStream> writer(ss);
+    doc.Accept(writer);
+    std::string s = ss.str();
+
+    return PyString_FromStringAndSize(s.data(), s.length());
+}
+
+
 static PyMethodDef PyrapidjsonMethods[] = {
     {"loads", (PyCFunction)pyrapidjson_loads, METH_VARARGS | METH_KEYWORDS,
      pyrapidjson_loads__doc__},
+    {"dumps", (PyCFunction)pyrapidjson_dumps, METH_VARARGS | METH_KEYWORDS,
+     pyrapidjson_dumps__doc__},
     {NULL, NULL, 0, NULL} /* Sentinel */
 };
 
