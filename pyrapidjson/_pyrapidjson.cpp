@@ -11,6 +11,7 @@
 #define PY3
 #define PyInt_FromLong PyLong_FromLong
 #define PyInt_FromString PyLong_FromString
+#define PyInt_Check PyLong_Check
 #endif
 
 #define DEFAULT_TOKEN_SIZE 1024
@@ -20,6 +21,7 @@
 #define _info(format,...) printf("[INFO]" format,__VA_ARGS__)
 #endif
 
+static void pyobj2doc(PyObject *object, rapidjson::Document& doc);
 static PyObject* doc2pyobj(rapidjson::Document&);
 static PyObject* _get_pyobj_from_object(
         rapidjson::Value::ConstMemberIterator& doc, PyObject *root,
@@ -95,8 +97,9 @@ _get_pyobj_from_array(rapidjson::Value::ConstValueIterator& doc,
         break;
     case rapidjson::kNumberType:
         if (doc->IsDouble()) {
-            printf("%f\n", doc->GetDouble());
-            obj = PyFloat_FromDouble(doc->GetDouble());
+            char _tmp[100] = "";
+            sprintf(_tmp, "%lf", doc->GetDouble());
+            obj = PyFloat_FromDouble(atof(_tmp));
         }
         else {
             obj = PyInt_FromLong(doc->GetInt());
@@ -246,6 +249,103 @@ pyrapidjson_loads(PyObject *self, PyObject *args, PyObject *kwargs)
 }
 
 
+static void
+pyobj2doc(PyObject *object, rapidjson::Document& doc)
+{
+    if (PyBool_Check(object)) {
+        if (Py_True == object) {
+	        doc.SetBool(true);
+        }
+        else {
+	        doc.SetBool(false);
+        }
+    }
+    else if (Py_None == object) {
+        doc.SetNull();
+    }
+    else if (PyFloat_Check(object)) {
+        doc.SetDouble(PyFloat_AsDouble(object));
+    }
+    else if (PyInt_Check(object)) {
+        doc.SetInt(PyLong_AsLong(object));
+    }
+    else if (PyString_Check(object)) {
+        if (strlen(PyString_AsString(object)) == PyString_GET_SIZE(object)) {
+            doc.SetString(PyString_AsString(object), PyString_GET_SIZE(object));
+        }
+        else {
+            doc.SetString(PyString_AsString(object), PyString_GET_SIZE(object));
+        }
+    }
+    else if (PyUnicode_Check(object)) {
+#ifdef PY3
+        PyObject *utf8_item;
+        utf8_item = PyUnicode_AsUTF8String(object);
+        if (!utf8_item) {
+            // TODO: error handling
+            printf("error\n");
+        }
+
+        if (strlen(PyBytes_AsString(utf8_item)) == PyUnicode_GET_SIZE(object)) {
+            doc.SetString(PyBytes_AsString(utf8_item), PyBytes_Size(utf8_item));
+        }
+        else {
+            // TODO: not need?
+            doc.SetString(PyBytes_AsString(object), PyString_GET_SIZE(object));
+        }
+
+        Py_XDECREF(utf8_item);
+#else
+        doc.SetString(PyBytes_AsString(object), PyBytes_GET_SIZE(object));
+#endif
+    }
+#if 0
+    else if (PyTuple_Check(object)) {
+        rapidjson::Document::AllocatorType& allocator = doc.GetAllocator();
+        int len = PyTuple_Size(object), i;
+
+        doc.SetArray();
+        for (i = 0; i < len; ++i) {
+            PyObject *elm = PyTuple_GetItem(object, i);
+            doc.PushBack(elm, allocator);
+            pyobj2doc(elm, doc);
+        }
+    }
+    else if (PyList_Check(object)) {
+        rapidjson::Document::AllocatorType& allocator = doc.GetAllocator();
+        int len = PyList_Size(object), i;
+
+        doc.SetArray();
+        for (i = 0; i < len; ++i) {
+            PyObject *elm = PyList_GetItem(object, i);
+            doc.PushBack(elm, allocator);
+            pyobj2doc(elm, doc);
+        }
+    }
+    else if (PyDict_Check(object)) {
+        otama_variant_set_hash(var);
+        PyObject *key, *value;
+        Py_ssize_t pos = 0;
+        while (PyDict_Next(object, &pos, &key, &value)) {
+            PyObject *_size = PyLong_FromSsize_t(pos);
+            long i = PyLong_AsLong(_size);
+            Py_XDECREF(_size);
+            if (i == -1) break;
+
+            pyobj2variant_pair(key, value, var);
+        }
+    }
+    else {
+        if (PyObject_IsInstance(object, (PyObject *)&OtamaFeatureRawObjectType)) {
+            otama_variant_set_pointer(var, ((OtamaFeatureRawObject *)object)->raw);
+        }
+        else {
+            otama_variant_set_null(var);
+        }
+    }
+#endif
+}
+
 static PyObject *
 pyrapidjson_dumps(PyObject *self, PyObject *args, PyObject *kwargs)
 {
@@ -258,10 +358,7 @@ pyrapidjson_dumps(PyObject *self, PyObject *args, PyObject *kwargs)
         return NULL;
 
     // FIXME
-    rapidjson::Value _s;
-    char _buf[10] = "world";
-    _s.SetString(_buf, 5, doc.GetAllocator());
-    doc.AddMember("hello", _s, doc.GetAllocator());
+    pyobj2doc(pyjson, doc);
 
     _OutputStringStream ss;
     rapidjson::Writer<_OutputStringStream> writer(ss);
