@@ -45,7 +45,7 @@ struct _OutputStringStream : public std::ostringstream {
 	}
 };
 
-static void
+static inline void
 pyobj2doc_pair(PyObject *key, PyObject *value,
                rapidjson::Value& doc, rapidjson::Document& root)
 {
@@ -62,7 +62,7 @@ pyobj2doc_pair(PyObject *key, PyObject *value,
     pyobj2doc(value, _v, root);
     doc.AddMember(key_string, _v, root.GetAllocator());
 }
-static void
+static inline void
 pyobj2doc_pair(PyObject *key, PyObject *value, rapidjson::Document& doc)
 {
     const char *key_string;
@@ -421,7 +421,7 @@ pyobj2pystring(PyObject *pyjson)
 static PyObject *
 pyrapidjson_loads(PyObject *self, PyObject *args, PyObject *kwargs)
 {
-    static char *kwlist[] = {"text", NULL};
+    static char *kwlist[] = {(char *)"text", NULL};
     char *text;
     PyObject *pyjson;
     rapidjson::Document doc;
@@ -460,7 +460,7 @@ pyrapidjson_loads(PyObject *self, PyObject *args, PyObject *kwargs)
                 pyjson = PyFloat_FromDouble(atof(text));
             }
             else {
-                pyjson = PyInt_FromString(text, NULL, NULL);
+                pyjson = PyInt_FromString(text, NULL, 10);
             }
             return pyjson;
         }
@@ -473,7 +473,7 @@ pyrapidjson_loads(PyObject *self, PyObject *args, PyObject *kwargs)
 static PyObject *
 pyrapidjson_dumps(PyObject *self, PyObject *args, PyObject *kwargs)
 {
-    static char *kwlist[] = {"obj", NULL};
+    static char *kwlist[] = {(char *)"obj", NULL};
     PyObject *pyjson;
 
     /* Parse arguments */
