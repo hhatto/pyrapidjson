@@ -11,14 +11,15 @@ setup(
     author_email='hhatto.jp@gmail.com',
     url='https://github.com/hhatto/pyrapidjson',
     classifiers=[
-        'Development Status :: 3 - Alpha',
+        'Development Status :: 4 - Beta',
         'Intended Audience :: Developers',
         'License :: OSI Approved :: MIT License',
         'Operating System :: OS Independent',
+        'Programming Language :: C++',
         'Programming Language :: Python',
         'Programming Language :: Python :: 2',
     ],
-    keywords='json jsmn',
+    keywords='json rapidjson',
     ext_modules=[
         Extension('rapidjson',
                   sources=['pyrapidjson/_pyrapidjson.cpp'],
