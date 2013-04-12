@@ -36,6 +36,9 @@ basic usage::
     >>> import rapidjson
     >>> rapidjson.loads('[1, 2, {"test": "hoge"}]')
     >>> [1, 2, {"test": "hoge"}]
+    >>> rapidjson.dumps([1, 2, {"foo": "bar"}])
+    '[1,2,{"foo":"bar"}]'
+    >>>
 
 
 Links
