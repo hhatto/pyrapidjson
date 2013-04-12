@@ -146,10 +146,14 @@ class TestEncodeComplex(unittest.TestCase):
     def test_list_in_dict(self):
         jsonobj = {"test": [1, "hello"]}
         ret = rapidjson.dumps(jsonobj)
-        self.assertEqual(ret, """{"test": [1, "hello"]}""")
+        self.assertEqual(ret, """{"test":[1,"hello"]}""")
 
     def test_dict_in_dict(self):
-        text = """{"test": {"hello": "world"}}"""
         jsonobj = {"test": {"hello": "world"}}
         ret = rapidjson.dumps(jsonobj)
-        self.assertEqual(ret, """{"test": {"hello": "world"}}""")
+        self.assertEqual(ret, """{"test":{"hello":"world"}}""")
+
+    def test_dict_in_dict_and_list(self):
+        jsonobj = {"test": {"hello": ["world", "!!"]}}
+        ret = rapidjson.dumps(jsonobj)
+        self.assertEqual(ret, """{"test":{"hello":["world","!!"]}}""")
