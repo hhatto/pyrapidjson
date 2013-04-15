@@ -265,13 +265,8 @@ pyobj2doc(PyObject *object, rapidjson::Value& doc, rapidjson::Document& root)
             printf("error\n");
         }
 
-        if (strlen(PyBytes_AsString(utf8_item)) == PyUnicode_GET_SIZE(object)) {
-            doc.SetString(PyBytes_AsString(utf8_item), PyBytes_Size(utf8_item));
-        }
-        else {
-            // TODO: not need?
-            doc.SetString(PyBytes_AsString(object), PyString_GET_SIZE(object));
-        }
+        doc.SetString(PyBytes_AsString(utf8_item),
+                      PyBytes_Size(utf8_item), root.GetAllocator());
 
         Py_XDECREF(utf8_item);
 #else
@@ -282,9 +277,9 @@ pyobj2doc(PyObject *object, rapidjson::Value& doc, rapidjson::Document& root)
         int len = PyTuple_Size(object), i;
 
         doc.SetArray();
+        rapidjson::Value _v;
         for (i = 0; i < len; ++i) {
             PyObject *elm = PyList_GetItem(object, i);
-            rapidjson::Value _v;
             pyobj2doc(elm, _v, root);
             doc.PushBack(_v, root.GetAllocator());
         }
@@ -293,9 +288,9 @@ pyobj2doc(PyObject *object, rapidjson::Value& doc, rapidjson::Document& root)
         int len = PyList_Size(object), i;
 
         doc.SetArray();
+        rapidjson::Value _v;
         for (i = 0; i < len; ++i) {
             PyObject *elm = PyList_GetItem(object, i);
-            rapidjson::Value _v;
             pyobj2doc(elm, _v, root);
             doc.PushBack(_v, root.GetAllocator());
         }
@@ -305,11 +300,6 @@ pyobj2doc(PyObject *object, rapidjson::Value& doc, rapidjson::Document& root)
         PyObject *key, *value;
         Py_ssize_t pos = 0;
         while (PyDict_Next(object, &pos, &key, &value)) {
-            PyObject *_size = PyLong_FromSsize_t(pos);
-            long i = PyLong_AsLong(_size);
-            Py_XDECREF(_size);
-            if (i == -1) break;
-
             pyobj2doc_pair(key, value, doc, root);
         }
     }
@@ -350,13 +340,8 @@ pyobj2doc(PyObject *object, rapidjson::Document& doc)
             printf("error\n");
         }
 
-        if (strlen(PyBytes_AsString(utf8_item)) == PyUnicode_GET_SIZE(object)) {
-            doc.SetString(PyBytes_AsString(utf8_item), PyBytes_Size(utf8_item));
-        }
-        else {
-            // TODO: not need?
-            doc.SetString(PyBytes_AsString(object), PyString_GET_SIZE(object));
-        }
+        doc.SetString(PyBytes_AsString(utf8_item),
+                      PyBytes_Size(utf8_item), doc.GetAllocator());
 
         Py_XDECREF(utf8_item);
 #else
@@ -365,22 +350,20 @@ pyobj2doc(PyObject *object, rapidjson::Document& doc)
     }
     else if (PyTuple_Check(object)) {
         int len = PyTuple_Size(object), i;
-
         doc.SetArray();
+        rapidjson::Value _v;
         for (i = 0; i < len; ++i) {
             PyObject *elm = PyList_GetItem(object, i);
-            rapidjson::Value _v;
             pyobj2doc(elm, _v, doc);
             doc.PushBack(_v, doc.GetAllocator());
         }
     }
     else if (PyList_Check(object)) {
         int len = PyList_Size(object), i;
-
         doc.SetArray();
+        rapidjson::Value _v;
         for (i = 0; i < len; ++i) {
             PyObject *elm = PyList_GetItem(object, i);
-            rapidjson::Value _v;
             pyobj2doc(elm, _v, doc);
             doc.PushBack(_v, doc.GetAllocator());
         }
@@ -390,11 +373,6 @@ pyobj2doc(PyObject *object, rapidjson::Document& doc)
         PyObject *key, *value;
         Py_ssize_t pos = 0;
         while (PyDict_Next(object, &pos, &key, &value)) {
-            PyObject *_size = PyLong_FromSsize_t(pos);
-            long i = PyLong_AsLong(_size);
-            Py_XDECREF(_size);
-            if (i == -1) break;
-
             pyobj2doc_pair(key, value, doc);
         }
     }
