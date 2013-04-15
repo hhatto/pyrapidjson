@@ -67,6 +67,11 @@ class TestDecodeSimple(unittest.TestCase):
 
 class TestDecodeComplex(unittest.TestCase):
 
+    def test_list_in_list(self):
+        text = """["test", [1, "hello"]]"""
+        ret = rapidjson.loads(text)
+        self.assertEqual(ret, ["test", [1, "hello"]])
+
     def test_list_in_dict(self):
         text = """{"test": [1, "hello"]}"""
         ret = rapidjson.loads(text)
@@ -142,6 +147,11 @@ class TestEncodeSimple(unittest.TestCase):
 
 
 class TestEncodeComplex(unittest.TestCase):
+
+    def test_list_in_list(self):
+        jsonobj = [-123, [1, "hello"]]
+        ret = rapidjson.dumps(jsonobj)
+        self.assertEqual(ret, """[-123,[1,"hello"]]""")
 
     def test_list_in_dict(self):
         jsonobj = {"test": [1, "hello"]}
