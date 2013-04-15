@@ -12,9 +12,11 @@
 #define PyInt_FromLong PyLong_FromLong
 #define PyInt_FromString PyLong_FromString
 #define PyInt_Check PyLong_Check
+#define PyString_FromStringAndSize PyUnicode_FromStringAndSize
+#define PyString_Check PyBytes_Check
+#define PyString_AsString PyBytes_AsString
+#define PyString_GET_SIZE PyUnicode_GET_SIZE
 #endif
-
-#define DEFAULT_TOKEN_SIZE 1024
 
 #ifdef DEBUG
 #define _debug(format,...) printf("[DEBUG]" format,__VA_ARGS__)
@@ -30,9 +32,7 @@ static PyObject* _get_pyobj_from_object(
         const char *key);
 
 /* The module doc strings */
-#ifndef PY3
 PyDoc_STRVAR(pyrapidjson__doc__, "Python binding for rapidjson");
-#endif
 PyDoc_STRVAR(pyrapidjson_loads__doc__, "Decoding JSON");
 PyDoc_STRVAR(pyrapidjson_dumps__doc__, "Encoding JSON");
 
@@ -496,11 +496,12 @@ static PyMethodDef PyrapidjsonMethods[] = {
 static struct PyModuleDef pyrapidjson_module_def = {
     PyModuleDef_HEAD_INIT,
     "rapidjson",
-    "Python binding for rapidjson",
+    pyrapidjson__doc__,
     -1,
     PyrapidjsonMethods,
 };
-PyObject *
+
+PyMODINIT_FUNC
 PyInit_rapidjson(void)
 #else
 
