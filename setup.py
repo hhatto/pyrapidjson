@@ -18,6 +18,7 @@ setup(
         'Programming Language :: C++',
         'Programming Language :: Python',
         'Programming Language :: Python :: 2',
+        'Programming Language :: Python :: 3',
     ],
     keywords='json rapidjson',
     ext_modules=[
