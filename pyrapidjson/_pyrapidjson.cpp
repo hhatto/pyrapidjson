@@ -54,7 +54,6 @@ pyobj2doc_pair(PyObject *key, PyObject *value,
     PyObject *utf8_item;
     utf8_item = PyUnicode_AsUTF8String(key);
     key_string = PyBytes_AsString(utf8_item);
-    Py_XDECREF(utf8_item);
 #else
     key_string = PyString_AsString(key);
 #endif
@@ -70,7 +69,6 @@ pyobj2doc_pair(PyObject *key, PyObject *value, rapidjson::Document& doc)
     PyObject *utf8_item;
     utf8_item = PyUnicode_AsUTF8String(key);
     key_string = PyBytes_AsString(utf8_item);
-    Py_XDECREF(utf8_item);
 #else
     key_string = PyString_AsString(key);
 #endif
