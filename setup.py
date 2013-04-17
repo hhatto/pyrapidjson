@@ -3,7 +3,7 @@ from distutils.core import setup, Extension
 
 setup(
     name='pyrapidjson',
-    version='0.1',
+    version='0.2',
     description='Python Interface for rapidjson(JSON parser and generator).',
     long_description=open('README.rst').read(),
     license='Expat License',
@@ -18,6 +18,7 @@ setup(
         'Programming Language :: C++',
         'Programming Language :: Python',
         'Programming Language :: Python :: 2',
+        'Programming Language :: Python :: 3',
     ],
     keywords='json rapidjson',
     ext_modules=[
