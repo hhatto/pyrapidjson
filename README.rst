@@ -49,5 +49,5 @@ Links
 
 .. _PyPI: http://pypi.python.org/pypi/pyrapidjson/
 .. _GitHub: https://github.com/hhatto/pyrapidjson
-.. _`Travis-CI`: https://secure.travis-ci.org/hhatto/pyrapidjson
+.. _`Travis-CI`: https://travis-ci.org/hhatto/pyrapidjson
 
