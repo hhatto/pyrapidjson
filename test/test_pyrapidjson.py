@@ -143,7 +143,8 @@ class TestEncodeSimple(unittest.TestCase):
     def test_dict_size_two(self):
         jsonobj = {"hoge": None, "huga": 134}
         ret = rapidjson.dumps(jsonobj)
-        self.assertEqual(ret, """{"huga":134,"hoge":null}""")
+        self.assertEqual(""""hoge":null""" in ret, True)
+        self.assertEqual(""""huga":134""" in ret, True)
 
 
 class TestEncodeComplex(unittest.TestCase):
