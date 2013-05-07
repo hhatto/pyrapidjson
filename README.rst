@@ -1,7 +1,7 @@
 pyrapidjson
 ===========
-.. image:: https://secure.travis-ci.org/hhatto/pyrapidjson.png?branch=master
-   :target: https://secure.travis-ci.org/hhatto/pyrapidjson
+.. image:: https://travis-ci.org/hhatto/pyrapidjson.png?branch=master
+   :target: https://travis-ci.org/hhatto/pyrapidjson
    :alt: Build status
 
 
