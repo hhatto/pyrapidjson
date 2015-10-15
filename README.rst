@@ -9,7 +9,7 @@ About
 -----
 pyrapidjson is a wrapper for `rapidjson`_ (JSON parser/generator).
 
-.. _`rapidjson`: http://code.google.com/p/rapidjson/
+.. _`rapidjson`: https://github.com/miloyip/rapidjson
 
 
 Installation
