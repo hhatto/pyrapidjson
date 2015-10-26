@@ -6,6 +6,7 @@
 #include "rapidjson/rapidjson.h"
 #include "rapidjson/document.h"
 #include "rapidjson/prettywriter.h"
+#include "rapidjson/stringbuffer.h"
 
 #if PY_MAJOR_VERSION >= 3
 #define PY3
@@ -37,14 +38,6 @@ PyDoc_STRVAR(pyrapidjson_loads__doc__, "Decoding JSON");
 PyDoc_STRVAR(pyrapidjson_dumps__doc__, "Encoding JSON");
 
 
-struct _OutputStringStream : public std::ostringstream {
-	typedef char Ch;
-
-	void Put(char c) {
-		put(c);
-	}
-};
-
 static inline void
 pyobj2doc_pair(PyObject *key, PyObject *value,
                rapidjson::Value& doc, rapidjson::Document& root)
@@ -58,9 +51,11 @@ pyobj2doc_pair(PyObject *key, PyObject *value,
 #else
     key_string = PyString_AsString(key);
 #endif
+    rapidjson::Value s;
+    s.SetString(key_string, root.GetAllocator());
     rapidjson::Value _v;
     pyobj2doc(value, _v, root);
-    doc.AddMember(key_string, _v, root.GetAllocator());
+    doc.AddMember(s, _v, root.GetAllocator());
 }
 static inline void
 pyobj2doc_pair(PyObject *key, PyObject *value, rapidjson::Document& doc)
@@ -74,9 +69,11 @@ pyobj2doc_pair(PyObject *key, PyObject *value, rapidjson::Document& doc)
 #else
     key_string = PyString_AsString(key);
 #endif
+    rapidjson::Value s;
+    s.SetString(key_string, doc.GetAllocator());
     rapidjson::Value _v;
     pyobj2doc(value, _v, doc);
-    doc.AddMember(key_string, _v, doc.GetAllocator());
+    doc.AddMember(s, _v, doc.GetAllocator());
 }
 
 static inline void
@@ -410,10 +407,10 @@ pyobj2pystring(PyObject *pyjson)
 
     pyobj2doc(pyjson, doc);
 
-    _OutputStringStream ss;
-    rapidjson::Writer<_OutputStringStream> writer(ss);
+    rapidjson::StringBuffer buffer;
+    rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
     doc.Accept(writer);
-    std::string s = ss.str();
+    std::string s = buffer.GetString();
 
     return PyString_FromStringAndSize(s.data(), s.length());
 }
@@ -432,7 +429,7 @@ pyrapidjson_loads(PyObject *self, PyObject *args, PyObject *kwargs)
     if (!PyArg_ParseTupleAndKeywords(args, kwargs, "s", kwlist, &text))
         return NULL;
 
-    doc.Parse<0>(text);
+    doc.Parse(text);
 
     if (!(doc.IsArray() || doc.IsObject())) {
         switch (text[0]) {
