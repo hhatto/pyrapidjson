@@ -133,7 +133,7 @@ _get_pyobj_from_array(rapidjson::Value::ConstValueIterator& doc,
             obj = PyFloat_FromDouble(atof(_tmp));
         }
         else {
-            obj = PyInt_FromLong(doc->GetInt());
+            obj = PyInt_FromLong(doc->GetInt64());
         }
         break;
     case rapidjson::kNullType:
@@ -188,7 +188,7 @@ _get_pyobj_from_object(rapidjson::Value::ConstMemberIterator& doc,
             obj = PyFloat_FromDouble(doc->value.GetDouble());
         }
         else {
-            obj = PyInt_FromLong(doc->value.GetInt());
+            obj = PyInt_FromLong(doc->value.GetInt64());
         }
         break;
     case rapidjson::kNullType:
