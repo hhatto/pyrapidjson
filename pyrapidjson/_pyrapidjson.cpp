@@ -246,7 +246,7 @@ pyobj2doc(PyObject *object, rapidjson::Value& doc, rapidjson::Document& root)
         doc.SetDouble(PyFloat_AsDouble(object));
     }
     else if (PyInt_Check(object)) {
-        doc.SetInt(PyLong_AsLong(object));
+        doc.SetInt64(PyLong_AsLong(object));
     }
     else if (PyString_Check(object)) {
         doc.SetString(PyString_AsString(object), PyString_GET_SIZE(object));
@@ -321,7 +321,7 @@ pyobj2doc(PyObject *object, rapidjson::Document& doc)
         doc.SetDouble(PyFloat_AsDouble(object));
     }
     else if (PyInt_Check(object)) {
-        doc.SetInt(PyLong_AsLong(object));
+        doc.SetInt64(PyLong_AsLong(object));
     }
     else if (PyString_Check(object)) {
         doc.SetString(PyString_AsString(object), PyString_GET_SIZE(object));
