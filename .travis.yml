@@ -1,5 +1,12 @@
 language: python
-
+sudo: false
+cache:
+  directories:
+    - $HOME/.cache/pip
+    - $HOME/.ccache
+env:
+    global:
+        - PATH: /usr/lib/ccache:$PATH
 python:
     - "2.6"
     - "2.7"
