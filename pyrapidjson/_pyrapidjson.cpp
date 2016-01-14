@@ -500,11 +500,11 @@ static struct PyModuleDef pyrapidjson_module_def = {
 };
 
 PyMODINIT_FUNC
-PyInit_pyrapidjson(void)
+PyInit_rapidjson(void)
 #else
 
 PyMODINIT_FUNC
-initpyrapidjson(void)
+initrapidjson(void)
 #endif
 {
     PyObject *module;
