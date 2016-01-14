@@ -24,8 +24,8 @@
 #define _info(format,...) printf("[INFO]" format,__VA_ARGS__)
 #endif
 
-static void pyobj2doc(PyObject *object, rapidjson::Document& doc);
-static void pyobj2doc(PyObject *object, rapidjson::Value& doc, rapidjson::Document& root);
+static bool pyobj2doc(PyObject *object, rapidjson::Document& doc);
+static bool pyobj2doc(PyObject *object, rapidjson::Value& doc, rapidjson::Document& root);
 
 static PyObject* doc2pyobj(rapidjson::Document&);
 static PyObject* _get_pyobj_from_object(
@@ -38,7 +38,7 @@ PyDoc_STRVAR(pyrapidjson_loads__doc__, "Decoding JSON");
 PyDoc_STRVAR(pyrapidjson_dumps__doc__, "Encoding JSON");
 
 
-static inline void
+static inline bool
 pyobj2doc_pair(PyObject *key, PyObject *value,
                rapidjson::Value& doc, rapidjson::Document& root)
 {
@@ -53,10 +53,13 @@ pyobj2doc_pair(PyObject *key, PyObject *value,
     rapidjson::Value s;
     s.SetString(key_string, root.GetAllocator());
     rapidjson::Value _v;
-    pyobj2doc(value, _v, root);
+    if (false == pyobj2doc(value, _v, root)) {
+        return false;
+    }
     doc.AddMember(s, _v, root.GetAllocator());
+    return true;
 }
-static inline void
+static inline bool
 pyobj2doc_pair(PyObject *key, PyObject *value, rapidjson::Document& doc)
 {
     const char *key_string;
@@ -70,8 +73,11 @@ pyobj2doc_pair(PyObject *key, PyObject *value, rapidjson::Document& doc)
     rapidjson::Value s;
     s.SetString(key_string, doc.GetAllocator());
     rapidjson::Value _v;
-    pyobj2doc(value, _v, doc);
+    if (false == pyobj2doc(value, _v, doc)) {
+        return false;
+    }
     doc.AddMember(s, _v, doc.GetAllocator());
+    return true;
 }
 
 static inline void
@@ -141,7 +147,7 @@ _get_pyobj_from_array(rapidjson::Value::ConstValueIterator& doc,
         obj = Py_None;
         break;
     default:
-        printf("not support. type:%d\n", doc->GetType());
+        PyErr_SetString(PyExc_RuntimeError, "not support type");
         return NULL;
     }
 
@@ -184,7 +190,6 @@ _get_pyobj_from_object(rapidjson::Value::ConstMemberIterator& doc,
         break;
     case rapidjson::kNumberType:
         if (doc->value.IsDouble()) {
-            printf("%f\n", doc->value.GetDouble());
             obj = PyFloat_FromDouble(doc->value.GetDouble());
         }
         else {
@@ -196,7 +201,7 @@ _get_pyobj_from_object(rapidjson::Value::ConstMemberIterator& doc,
         obj = Py_None;
         break;
     default:
-        printf("not support. type:%d\n", doc->value.GetType());
+        PyErr_SetString(PyExc_RuntimeError, "not support type");
         return NULL;
     }
 
@@ -228,7 +233,7 @@ doc2pyobj(rapidjson::Document& doc)
     return root;
 }
 
-static void
+static bool
 pyobj2doc(PyObject *object, rapidjson::Value& doc, rapidjson::Document& root)
 {
     if (PyBool_Check(object)) {
@@ -256,8 +261,8 @@ pyobj2doc(PyObject *object, rapidjson::Value& doc, rapidjson::Document& root)
         PyObject *utf8_item;
         utf8_item = PyUnicode_AsUTF8String(object);
         if (!utf8_item) {
-            // TODO: error handling
-            printf("error\n");
+            PyErr_SetString(PyExc_RuntimeError, "codec error.");
+            return false;
         }
 
         doc.SetString(PyBytes_AsString(utf8_item),
@@ -275,7 +280,9 @@ pyobj2doc(PyObject *object, rapidjson::Value& doc, rapidjson::Document& root)
         rapidjson::Value _v;
         for (i = 0; i < len; ++i) {
             PyObject *elm = PyList_GetItem(object, i);
-            pyobj2doc(elm, _v, root);
+            if (false == pyobj2doc(elm, _v, root)) {
+                return false;
+            }
             doc.PushBack(_v, root.GetAllocator());
         }
     }
@@ -286,7 +293,9 @@ pyobj2doc(PyObject *object, rapidjson::Value& doc, rapidjson::Document& root)
         rapidjson::Value _v;
         for (i = 0; i < len; ++i) {
             PyObject *elm = PyList_GetItem(object, i);
-            pyobj2doc(elm, _v, root);
+            if (false == pyobj2doc(elm, _v, root)) {
+                return false;
+            }
             doc.PushBack(_v, root.GetAllocator());
         }
     }
@@ -295,15 +304,20 @@ pyobj2doc(PyObject *object, rapidjson::Value& doc, rapidjson::Document& root)
         PyObject *key, *value;
         Py_ssize_t pos = 0;
         while (PyDict_Next(object, &pos, &key, &value)) {
-            pyobj2doc_pair(key, value, doc, root);
+            if (false == pyobj2doc_pair(key, value, doc, root)) {
+                return false;
+            }
         }
     }
     else {
-        // TODO: error handle
+        PyErr_SetString(PyExc_RuntimeError, "invalid python object");
+        return false;
     }
+
+    return true;
 }
 
-static void
+static bool
 pyobj2doc(PyObject *object, rapidjson::Document& doc)
 {
     if (PyBool_Check(object)) {
@@ -331,8 +345,8 @@ pyobj2doc(PyObject *object, rapidjson::Document& doc)
         PyObject *utf8_item;
         utf8_item = PyUnicode_AsUTF8String(object);
         if (!utf8_item) {
-            // TODO: error handling
-            printf("error\n");
+            PyErr_SetString(PyExc_RuntimeError, "codec error.");
+            return false;
         }
 
         doc.SetString(PyBytes_AsString(utf8_item),
@@ -349,7 +363,9 @@ pyobj2doc(PyObject *object, rapidjson::Document& doc)
         rapidjson::Value _v;
         for (i = 0; i < len; ++i) {
             PyObject *elm = PyList_GetItem(object, i);
-            pyobj2doc(elm, _v, doc);
+            if (false == pyobj2doc(elm, _v, doc)) {
+                return false;
+            }
             doc.PushBack(_v, doc.GetAllocator());
         }
     }
@@ -359,7 +375,9 @@ pyobj2doc(PyObject *object, rapidjson::Document& doc)
         rapidjson::Value _v;
         for (i = 0; i < len; ++i) {
             PyObject *elm = PyList_GetItem(object, i);
-            pyobj2doc(elm, _v, doc);
+            if (false == pyobj2doc(elm, _v, doc)) {
+                return false;
+            }
             doc.PushBack(_v, doc.GetAllocator());
         }
     }
@@ -368,12 +386,17 @@ pyobj2doc(PyObject *object, rapidjson::Document& doc)
         PyObject *key, *value;
         Py_ssize_t pos = 0;
         while (PyDict_Next(object, &pos, &key, &value)) {
-            pyobj2doc_pair(key, value, doc);
+            if (false == pyobj2doc_pair(key, value, doc)) {
+                return false;
+            }
         }
     }
     else {
-        // TODO: error handle
+        PyErr_SetString(PyExc_RuntimeError, "invalid python object");
+        return false;
     }
+
+    return true;
 }
 
 static PyObject *
@@ -381,7 +404,9 @@ pyobj2pystring(PyObject *pyjson)
 {
     rapidjson::Document doc;
 
-    pyobj2doc(pyjson, doc);
+    if (false == pyobj2doc(pyjson, doc)) {
+        return NULL;
+    }
 
     rapidjson::StringBuffer buffer;
     rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
@@ -475,11 +500,11 @@ static struct PyModuleDef pyrapidjson_module_def = {
 };
 
 PyMODINIT_FUNC
-PyInit_rapidjson(void)
+PyInit_pyrapidjson(void)
 #else
 
 PyMODINIT_FUNC
-initrapidjson(void)
+initpyrapidjson(void)
 #endif
 {
     PyObject *module;
