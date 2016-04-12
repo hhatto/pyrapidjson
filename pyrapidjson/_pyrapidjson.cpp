@@ -134,9 +134,7 @@ _get_pyobj_from_array(rapidjson::Value::ConstValueIterator& doc,
         break;
     case rapidjson::kNumberType:
         if (doc->IsDouble()) {
-            char _tmp[100] = "";
-            sprintf(_tmp, "%lf", doc->GetDouble());
-            obj = PyFloat_FromDouble(atof(_tmp));
+            obj = PyFloat_FromDouble(doc->GetDouble());
         }
         else {
             obj = PyInt_FromLong(doc->GetInt64());
