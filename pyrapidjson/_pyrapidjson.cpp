@@ -27,6 +27,11 @@
 #define _info(format,...) printf("[INFO]" format,__VA_ARGS__)
 #endif
 
+// for Python2.6
+#ifndef _PyVerify_fd
+#define _PyVerify_fd(FD) (1)
+#endif
+
 static bool pyobj2doc(PyObject *object, rapidjson::Document& doc);
 static bool pyobj2doc(PyObject *object, rapidjson::Value& doc, rapidjson::Document& root);
 
