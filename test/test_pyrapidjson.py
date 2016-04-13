@@ -1,4 +1,5 @@
 # coding: utf-8
+import sys
 import os
 import json
 import unittest
@@ -190,8 +191,7 @@ class TestFileStream(unittest.TestCase):
     def test_dump_with_utf8(self):
         jsonobj = {"test": [1, "こんにちは"]}
         fp = NamedTemporaryFile(delete=False)
-        # rapidjson.dump(jsonobj, fp)
-        json.dump(jsonobj, fp)
+        rapidjson.dump(jsonobj, fp)
         fp.close()
         check_fp = open(fp.name)
         ret = json.load(check_fp)
@@ -200,7 +200,7 @@ class TestFileStream(unittest.TestCase):
         os.remove(fp.name)
 
     def test_load(self):
-        jsonstr = """{"test": [1, "hello"]}"""
+        jsonstr = b"""{"test": [1, "hello"]}"""
         fp = NamedTemporaryFile(delete=False)
         fp.write(jsonstr)
         fp.close()
@@ -213,7 +213,10 @@ class TestFileStream(unittest.TestCase):
 
     def test_load_with_utf8(self):
         jsonstr = """{"test": [1, "こんにちは"]}"""
-        fp = NamedTemporaryFile(delete=False)
+        if sys.version_info >= (3, ):
+            fp = NamedTemporaryFile(mode='w', delete=False, encoding='utf-8')
+        else:
+            fp = NamedTemporaryFile(mode='w', delete=False)
         fp.write(jsonstr)
         fp.close()
         check_fp = open(fp.name)
