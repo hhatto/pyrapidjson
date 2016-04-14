@@ -506,12 +506,19 @@ pyrapidjson_load(PyObject *self, PyObject *args, PyObject *kwargs)
     if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O", kwlist, &py_file))
         return NULL;
     fd0 = PyObject_AsFileDescriptor(py_file);
-    if (fd0 == -1)
+    if (fd0 == -1) {
+        PyErr_SetString(PyExc_RuntimeError, "open file error");
         return NULL;
-    if (!_PyVerify_fd(fd0))
+    }
+    if (!_PyVerify_fd(fd0)) {
+        PyErr_SetString(PyExc_RuntimeError, "open file error");
         return NULL;
+    }
     fd1 = dup(fd0);
     fp = fdopen(fd1, "rb");
+    if (!fp) {
+        return PyErr_SetFromErrno(PyExc_OSError);
+    }
 
     rapidjson::FileReadStream is(fp, readBuffer, sizeof(readBuffer));
 
@@ -550,12 +557,20 @@ pyrapidjson_dump(PyObject *self, PyObject *args, PyObject *kwargs)
     if (!PyArg_ParseTupleAndKeywords(args, kwargs, "OO", kwlist, &pyjson, &py_file))
         return NULL;
     fd0 = PyObject_AsFileDescriptor(py_file);
-    if (fd0 == -1)
+    if (fd0 == -1) {
+        PyErr_SetString(PyExc_RuntimeError, "open file error");
         return NULL;
-    if (!_PyVerify_fd(fd0))
+    }
+    if (!_PyVerify_fd(fd0)) {
+        PyErr_SetString(PyExc_RuntimeError, "open file error");
         return NULL;
+    }
+
     fd1 = dup(fd0);
     fp = fdopen(fd1, "wb");
+    if (!fp) {
+        return PyErr_SetFromErrno(PyExc_OSError);
+    }
 
     pyobj2pystring_filestream(pyjson, fp);
 
