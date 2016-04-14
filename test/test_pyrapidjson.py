@@ -199,6 +199,14 @@ class TestFileStream(unittest.TestCase):
         check_fp.close()
         os.remove(fp.name)
 
+    def test_dump_with_invalid_fp(self):
+        jsonobj = {"test": [1, "hello"]}
+        fp = NamedTemporaryFile(delete=False)
+        fp.close()
+        with self.assertRaisesRegexp(RuntimeError, "open file"):
+            rapidjson.dump(jsonobj, fp)
+        os.remove(fp.name)
+
     def test_load(self):
         jsonstr = b"""{"test": [1, "hello"]}"""
         fp = NamedTemporaryFile(delete=False)
@@ -224,4 +232,16 @@ class TestFileStream(unittest.TestCase):
         self.assertEqual(retobj["test"], [1, "こんにちは"])
         # teardown
         check_fp.close()
+        os.remove(fp.name)
+
+    def test_load_with_invalid_fp(self):
+        jsonstr = b"""{"test": [1, "hello"]}"""
+        fp = NamedTemporaryFile(delete=False)
+        fp.write(jsonstr)
+        fp.close()
+        check_fp = open(fp.name)
+        check_fp.close()
+        with self.assertRaisesRegexp(RuntimeError, "open file"):
+            rapidjson.load(check_fp)
+        # teardown
         os.remove(fp.name)
