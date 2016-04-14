@@ -203,8 +203,7 @@ class TestFileStream(unittest.TestCase):
         jsonobj = {"test": [1, "hello"]}
         fp = NamedTemporaryFile(delete=False)
         fp.close()
-        with self.assertRaisesRegexp(RuntimeError, "open file"):
-            rapidjson.dump(jsonobj, fp)
+        self.assertRaisesRegexp(RuntimeError, "open file", rapidjson.dump, jsonobj, fp)
         os.remove(fp.name)
 
     def test_load(self):
@@ -241,7 +240,6 @@ class TestFileStream(unittest.TestCase):
         fp.close()
         check_fp = open(fp.name)
         check_fp.close()
-        with self.assertRaisesRegexp(RuntimeError, "open file"):
-            rapidjson.load(check_fp)
+        self.assertRaisesRegexp(RuntimeError, "open file", rapidjson.load, check_fp)
         # teardown
         os.remove(fp.name)
