@@ -1,4 +1,9 @@
+# coding: utf-8
+import sys
+import os
+import json
 import unittest
+from tempfile import NamedTemporaryFile
 import rapidjson
 
 
@@ -168,3 +173,73 @@ class TestEncodeComplex(unittest.TestCase):
         jsonobj = {"test": {"hello": ["world", "!!"]}}
         ret = rapidjson.dumps(jsonobj)
         self.assertEqual(ret, """{"test":{"hello":["world","!!"]}}""")
+
+
+class TestFileStream(unittest.TestCase):
+
+    def test_dump(self):
+        jsonobj = {"test": [1, "hello"]}
+        fp = NamedTemporaryFile(delete=False)
+        rapidjson.dump(jsonobj, fp)
+        fp.close()
+        check_fp = open(fp.name)
+        ret = json.load(check_fp)
+        self.assertEqual(jsonobj, ret)
+        check_fp.close()
+        os.remove(fp.name)
+
+    def test_dump_with_utf8(self):
+        jsonobj = {"test": [1, "こんにちは"]}
+        fp = NamedTemporaryFile(delete=False)
+        rapidjson.dump(jsonobj, fp)
+        fp.close()
+        check_fp = open(fp.name)
+        ret = json.load(check_fp)
+        self.assertEqual(jsonobj[u"test"][0], ret[u"test"][0])
+        check_fp.close()
+        os.remove(fp.name)
+
+    def test_dump_with_invalid_fp(self):
+        jsonobj = {"test": [1, "hello"]}
+        fp = NamedTemporaryFile(delete=False)
+        fp.close()
+        self.assertRaises(RuntimeError, rapidjson.dump, jsonobj, fp)
+        os.remove(fp.name)
+
+    def test_load(self):
+        jsonstr = b"""{"test": [1, "hello"]}"""
+        fp = NamedTemporaryFile(delete=False)
+        fp.write(jsonstr)
+        fp.close()
+        check_fp = open(fp.name)
+        retobj = rapidjson.load(check_fp)
+        self.assertEqual(retobj["test"], [1, "hello"])
+        # teardown
+        check_fp.close()
+        os.remove(fp.name)
+
+    def test_load_with_utf8(self):
+        jsonstr = """{"test": [1, "こんにちは"]}"""
+        if sys.version_info >= (3, ):
+            fp = NamedTemporaryFile(mode='w', delete=False, encoding='utf-8')
+        else:
+            fp = NamedTemporaryFile(mode='w', delete=False)
+        fp.write(jsonstr)
+        fp.close()
+        check_fp = open(fp.name)
+        retobj = rapidjson.load(check_fp)
+        self.assertEqual(retobj["test"], [1, "こんにちは"])
+        # teardown
+        check_fp.close()
+        os.remove(fp.name)
+
+    def test_load_with_invalid_fp(self):
+        jsonstr = b"""{"test": [1, "hello"]}"""
+        fp = NamedTemporaryFile(delete=False)
+        fp.write(jsonstr)
+        fp.close()
+        check_fp = open(fp.name)
+        check_fp.close()
+        self.assertRaises(RuntimeError, rapidjson.load, check_fp)
+        # teardown
+        os.remove(fp.name)

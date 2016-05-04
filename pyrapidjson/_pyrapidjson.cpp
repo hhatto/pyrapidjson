@@ -7,6 +7,9 @@
 #include "rapidjson/document.h"
 #include "rapidjson/prettywriter.h"
 #include "rapidjson/stringbuffer.h"
+#include "rapidjson/filereadstream.h"
+#include "rapidjson/filewritestream.h"
+#include "rapidjson/encodedstream.h"
 
 #if PY_MAJOR_VERSION >= 3
 #define PY3
@@ -24,6 +27,11 @@
 #define _info(format,...) printf("[INFO]" format,__VA_ARGS__)
 #endif
 
+// for Python2.6
+#ifndef _PyVerify_fd
+#define _PyVerify_fd(FD) (1)
+#endif
+
 static bool pyobj2doc(PyObject *object, rapidjson::Document& doc);
 static bool pyobj2doc(PyObject *object, rapidjson::Value& doc, rapidjson::Document& root);
 
@@ -35,7 +43,9 @@ static PyObject* _get_pyobj_from_object(
 /* The module doc strings */
 PyDoc_STRVAR(pyrapidjson__doc__, "Python binding for rapidjson");
 PyDoc_STRVAR(pyrapidjson_loads__doc__, "Decoding JSON");
+PyDoc_STRVAR(pyrapidjson_load__doc__, "Decoding JSON file like object");
 PyDoc_STRVAR(pyrapidjson_dumps__doc__, "Encoding JSON");
+PyDoc_STRVAR(pyrapidjson_dump__doc__, "Encoding JSON file like object");
 
 
 static inline bool
@@ -414,6 +424,23 @@ pyobj2pystring(PyObject *pyjson)
     return PyString_FromStringAndSize(s.data(), s.length());
 }
 
+static void
+pyobj2pystring_filestream(PyObject *pyjson, FILE *fp)
+{
+    rapidjson::Document doc;
+    char writeBuffer[64*1024];
+
+    if (false == pyobj2doc(pyjson, doc)) {
+        return;
+    }
+
+    rapidjson::FileWriteStream os(fp, writeBuffer, sizeof(writeBuffer));
+    rapidjson::Writer<rapidjson::FileWriteStream> writer(os);
+    doc.Accept(writer);
+
+    return;
+}
+
 static PyObject *
 pyrapidjson_loads(PyObject *self, PyObject *args, PyObject *kwargs)
 {
@@ -465,6 +492,42 @@ pyrapidjson_loads(PyObject *self, PyObject *args, PyObject *kwargs)
     return doc2pyobj(doc);
 }
 
+static PyObject *
+pyrapidjson_load(PyObject *self, PyObject *args, PyObject *kwargs)
+{
+    static char *kwlist[] = {(char *)"text", NULL};
+    PyObject *py_file;
+    rapidjson::Document doc;
+    char readBuffer[64*1024];
+    int fd0, fd1;
+    FILE *fp;
+
+    /* Parse arguments */
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O", kwlist, &py_file))
+        return NULL;
+    fd0 = PyObject_AsFileDescriptor(py_file);
+    if (fd0 == -1) {
+        PyErr_SetString(PyExc_RuntimeError, "open file error");
+        return NULL;
+    }
+    if (!_PyVerify_fd(fd0)) {
+        PyErr_SetString(PyExc_RuntimeError, "open file error");
+        return NULL;
+    }
+    fd1 = dup(fd0);
+    fp = fdopen(fd1, "rb");
+    if (!fp) {
+        return PyErr_SetFromErrno(PyExc_OSError);
+    }
+
+    rapidjson::FileReadStream is(fp, readBuffer, sizeof(readBuffer));
+
+    doc.ParseStream(is);
+    fclose(fp);
+
+    return doc2pyobj(doc);
+}
+
 
 static PyObject *
 pyrapidjson_dumps(PyObject *self, PyObject *args, PyObject *kwargs)
@@ -480,11 +543,51 @@ pyrapidjson_dumps(PyObject *self, PyObject *args, PyObject *kwargs)
 }
 
 
+static PyObject *
+pyrapidjson_dump(PyObject *self, PyObject *args, PyObject *kwargs)
+{
+    // TODO: not support kwargs like json.dump() (encoding, etc...)
+    static char *kwlist[] = {(char *)"obj", (char *)"fp", NULL};
+    PyObject *py_file, *pyjson;
+    rapidjson::Document doc;
+    int fd0, fd1;
+    FILE *fp;
+
+    /* Parse arguments */
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "OO", kwlist, &pyjson, &py_file))
+        return NULL;
+    fd0 = PyObject_AsFileDescriptor(py_file);
+    if (fd0 == -1) {
+        PyErr_SetString(PyExc_RuntimeError, "open file error");
+        return NULL;
+    }
+    if (!_PyVerify_fd(fd0)) {
+        PyErr_SetString(PyExc_RuntimeError, "open file error");
+        return NULL;
+    }
+
+    fd1 = dup(fd0);
+    fp = fdopen(fd1, "wb");
+    if (!fp) {
+        return PyErr_SetFromErrno(PyExc_OSError);
+    }
+
+    pyobj2pystring_filestream(pyjson, fp);
+
+    fclose(fp);
+
+    Py_RETURN_NONE;
+}
+
 static PyMethodDef PyrapidjsonMethods[] = {
     {"loads", (PyCFunction)pyrapidjson_loads, METH_VARARGS | METH_KEYWORDS,
      pyrapidjson_loads__doc__},
+    {"load", (PyCFunction)pyrapidjson_load, METH_VARARGS | METH_KEYWORDS,
+     pyrapidjson_load__doc__},
     {"dumps", (PyCFunction)pyrapidjson_dumps, METH_VARARGS | METH_KEYWORDS,
      pyrapidjson_dumps__doc__},
+    {"dump", (PyCFunction)pyrapidjson_dump, METH_VARARGS | METH_KEYWORDS,
+     pyrapidjson_dump__doc__},
     {NULL, NULL, 0, NULL} /* Sentinel */
 };
 
