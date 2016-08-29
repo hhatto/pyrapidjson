@@ -74,14 +74,38 @@ pyobj2doc_pair(PyObject *key, PyObject *value, rapidjson::Document& doc)
 {
     const char *key_string;
 #ifdef PY3
-    PyObject *utf8_item;
-    utf8_item = PyUnicode_AsUTF8String(key);
+    PyObject *utf8_item = NULL;
+    PyObject *pyobj = NULL;
+    if (!PyUnicode_Check(key)) {
+        pyobj = PyObject_Str(key);
+        if (pyobj == NULL) {
+            PyErr_SetString(PyExc_TypeError, "not support key type");
+            return false;
+        }
+        utf8_item = PyUnicode_AsUTF8String(pyobj);
+    } else {
+        utf8_item = PyUnicode_AsUTF8String(key);
+    }
     key_string = PyBytes_AsString(utf8_item);
 #else
-    key_string = PyString_AsString(key);
+    if (PyString_Check(key)) {
+        key_string = PyString_AsString(key);
+    } else {
+        PyObject *pyobj = PyObject_Str(key);
+        if (pyobj == NULL) {
+            PyErr_SetString(PyExc_TypeError, "not support key type");
+            return false;
+        }
+        Py_DECREF(key);
+        key_string = PyString_AsString(pyobj);
+    }
 #endif
     rapidjson::Value s;
     s.SetString(key_string, doc.GetAllocator());
+#ifdef PY3
+    Py_XDECREF(pyobj);
+    Py_XDECREF(utf8_item);
+#endif
     rapidjson::Value _v;
     if (false == pyobj2doc(value, _v, doc)) {
         return false;

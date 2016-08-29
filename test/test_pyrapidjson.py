@@ -151,6 +151,21 @@ class TestEncodeSimple(unittest.TestCase):
         self.assertEqual(""""hoge":null""" in ret, True)
         self.assertEqual(""""huga":134""" in ret, True)
 
+    def test_dict_not_string_key(self):
+        invalid_jsonobj = {1: 1}
+        ret = rapidjson.dumps(invalid_jsonobj)
+        self.assertEqual(ret, """{"1":1}""")
+
+    def test_dict_not_string_key_long(self):
+        invalid_jsonobj = {429496729501234567: 1}
+        ret = rapidjson.dumps(invalid_jsonobj)
+        self.assertEqual(ret, """{"429496729501234567":1}""")
+
+    def test_dict_not_string_key_complex(self):
+        invalid_jsonobj = {-1.99: 1}
+        ret = rapidjson.dumps(invalid_jsonobj)
+        self.assertEqual(ret, """{"-1.99":1}""")
+
 
 class TestEncodeComplex(unittest.TestCase):
 
