@@ -73,9 +73,9 @@ static inline bool
 pyobj2doc_pair(PyObject *key, PyObject *value, rapidjson::Document& doc)
 {
     const char *key_string;
-#ifdef PY3
     PyObject *utf8_item = NULL;
     PyObject *pyobj = NULL;
+#ifdef PY3
     if (!PyUnicode_Check(key)) {
         pyobj = PyObject_Str(key);
         if (pyobj == NULL) {
@@ -90,6 +90,9 @@ pyobj2doc_pair(PyObject *key, PyObject *value, rapidjson::Document& doc)
 #else
     if (PyString_Check(key)) {
         key_string = PyString_AsString(key);
+    } else if (PyUnicode_Check(key)) {
+        utf8_item = PyUnicode_AsUTF8String(key);
+        key_string = PyBytes_AsString(utf8_item);
     } else {
         PyObject *pyobj = PyObject_Str(key);
         if (pyobj == NULL) {
@@ -102,10 +105,10 @@ pyobj2doc_pair(PyObject *key, PyObject *value, rapidjson::Document& doc)
 #endif
     rapidjson::Value s;
     s.SetString(key_string, doc.GetAllocator());
-#ifdef PY3
+
     Py_XDECREF(pyobj);
     Py_XDECREF(utf8_item);
-#endif
+
     rapidjson::Value _v;
     if (false == pyobj2doc(value, _v, doc)) {
         return false;
