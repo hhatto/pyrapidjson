@@ -88,6 +88,13 @@ class TestDecodeComplex(unittest.TestCase):
         self.assertEqual(ret, {"test": {"hello": "world"}})
 
 
+class TestDecodeFail(unittest.TestCase):
+
+    def test_use_single_quote_for_string(self):
+        text = "'foo'"
+        self.assertRaises(ValueError, rapidjson.loads, text)
+
+
 class TestEncodeSimple(unittest.TestCase):
 
     def test_integer(self):
