@@ -4,6 +4,7 @@
 #include <sstream>
 
 #include "rapidjson/rapidjson.h"
+#include "rapidjson/error/en.h"
 #include "rapidjson/document.h"
 #include "rapidjson/prettywriter.h"
 #include "rapidjson/stringbuffer.h"
@@ -483,6 +484,10 @@ pyrapidjson_loads(PyObject *self, PyObject *args, PyObject *kwargs)
         return NULL;
 
     doc.Parse(text);
+    if (doc.HasParseError()) {
+        PyErr_SetString(PyExc_ValueError, GetParseError_En(doc.GetParseError()));
+        return NULL;
+    }
 
     if (!(doc.IsArray() || doc.IsObject())) {
         switch (text[0]) {
@@ -551,6 +556,11 @@ pyrapidjson_load(PyObject *self, PyObject *args, PyObject *kwargs)
 
     doc.ParseStream(is);
     fclose(fp);
+
+    if (doc.HasParseError()) {
+        PyErr_SetString(PyExc_ValueError, GetParseError_En(doc.GetParseError()));
+        return NULL;
+    }
 
     return doc2pyobj(doc);
 }
