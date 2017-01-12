@@ -5,10 +5,14 @@ import json
 import unittest
 from tempfile import NamedTemporaryFile
 import rapidjson
-try:
-    from io import BytesIO as StringIO
-except ImportError:
-    from StringIO import StringIO
+
+if sys.version_info < (3, ):
+    try:
+        from io import BytesIO as StringIO
+    except ImportError:
+        from StringIO import StringIO
+else:
+    from io import StringIO
 
 
 class TestDecodeSimple(unittest.TestCase):
@@ -205,7 +209,7 @@ class TestFileStream(unittest.TestCase):
 
     def test_dump(self):
         jsonobj = {"test": [1, "hello"]}
-        fp = NamedTemporaryFile(delete=False)
+        fp = NamedTemporaryFile(mode='w', delete=False)
         rapidjson.dump(jsonobj, fp)
         fp.close()
         check_fp = open(fp.name)
@@ -216,7 +220,7 @@ class TestFileStream(unittest.TestCase):
 
     def test_dump_with_utf8(self):
         jsonobj = {"test": [1, "こんにちは"]}
-        fp = NamedTemporaryFile(delete=False)
+        fp = NamedTemporaryFile(mode='w', delete=False)
         rapidjson.dump(jsonobj, fp)
         fp.close()
         check_fp = open(fp.name)
@@ -227,7 +231,7 @@ class TestFileStream(unittest.TestCase):
 
     def test_dump_with_invalid_fp(self):
         jsonobj = {"test": [1, "hello"]}
-        fp = NamedTemporaryFile(delete=False)
+        fp = NamedTemporaryFile(mode='w', delete=False)
         fp.close()
         self.assertRaises(ValueError, rapidjson.dump, jsonobj, fp)
         os.remove(fp.name)
