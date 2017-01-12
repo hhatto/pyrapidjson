@@ -539,11 +539,11 @@ pyrapidjson_load(PyObject *self, PyObject *args, PyObject *kwargs)
         return NULL;
     fd0 = PyObject_AsFileDescriptor(py_file);
     if (fd0 == -1) {
-        PyErr_SetString(PyExc_RuntimeError, "open file error");
+        PyErr_SetString(PyExc_RuntimeError, "load() open file error, not return fd.");
         return NULL;
     }
     if (!_PyVerify_fd(fd0)) {
-        PyErr_SetString(PyExc_RuntimeError, "open file error");
+        PyErr_SetString(PyExc_RuntimeError, "load() open file error, invalid fd.");
         return NULL;
     }
     fd1 = dup(fd0);
@@ -595,11 +595,11 @@ pyrapidjson_dump(PyObject *self, PyObject *args, PyObject *kwargs)
         return NULL;
     fd0 = PyObject_AsFileDescriptor(py_file);
     if (fd0 == -1) {
-        PyErr_SetString(PyExc_RuntimeError, "open file error");
+        PyErr_SetString(PyExc_RuntimeError, "dump() open file error, not return fd.");
         return NULL;
     }
     if (!_PyVerify_fd(fd0)) {
-        PyErr_SetString(PyExc_RuntimeError, "open file error");
+        PyErr_SetString(PyExc_RuntimeError, "dump() open file error, invalid fd.");
         return NULL;
     }
 
