@@ -5,6 +5,10 @@ import json
 import unittest
 from tempfile import NamedTemporaryFile
 import rapidjson
+try:
+    from io import BytesIO as StringIO
+except ImportError:
+    from StringIO import StringIO
 
 
 class TestDecodeSimple(unittest.TestCase):
@@ -225,8 +229,15 @@ class TestFileStream(unittest.TestCase):
         jsonobj = {"test": [1, "hello"]}
         fp = NamedTemporaryFile(delete=False)
         fp.close()
-        self.assertRaises(RuntimeError, rapidjson.dump, jsonobj, fp)
+        self.assertRaises(ValueError, rapidjson.dump, jsonobj, fp)
         os.remove(fp.name)
+
+    def test_dump_with_io_stringio(self):
+        jsonobj = {"test": [1, "hello"]}
+        stream = StringIO()
+        rapidjson.dump(jsonobj, stream)
+        stream.seek(0)
+        self.assertEqual("{\"test\":[1,\"hello\"]}", stream.read())
 
     def test_load(self):
         jsonstr = b"""{"test": [1, "hello"]}"""

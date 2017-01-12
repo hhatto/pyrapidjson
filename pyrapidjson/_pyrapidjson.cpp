@@ -452,23 +452,6 @@ pyobj2pystring(PyObject *pyjson)
     return PyString_FromStringAndSize(s.data(), s.length());
 }
 
-static void
-pyobj2pystring_filestream(PyObject *pyjson, FILE *fp)
-{
-    rapidjson::Document doc;
-    char writeBuffer[64*1024];
-
-    if (false == pyobj2doc(pyjson, doc)) {
-        return;
-    }
-
-    rapidjson::FileWriteStream os(fp, writeBuffer, sizeof(writeBuffer));
-    rapidjson::Writer<rapidjson::FileWriteStream> writer(os);
-    doc.Accept(writer);
-
-    return;
-}
-
 static PyObject *
 pyrapidjson_loads(PyObject *self, PyObject *args, PyObject *kwargs)
 {
@@ -585,33 +568,47 @@ pyrapidjson_dump(PyObject *self, PyObject *args, PyObject *kwargs)
 {
     // TODO: not support kwargs like json.dump() (encoding, etc...)
     static char *kwlist[] = {(char *)"obj", (char *)"fp", NULL};
-    PyObject *py_file, *pyjson;
+    PyObject *py_file, *py_json, *py_string, *write_method, *write_arg;
     rapidjson::Document doc;
-    int fd0, fd1;
-    FILE *fp;
 
     /* Parse arguments */
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "OO", kwlist, &pyjson, &py_file))
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "OO", kwlist, &py_json, &py_file))
         return NULL;
-    fd0 = PyObject_AsFileDescriptor(py_file);
-    if (fd0 == -1) {
-        PyErr_SetString(PyExc_RuntimeError, "dump() open file error, not return fd.");
+
+    if (!PyObject_HasAttrString(py_file, "write")) {
+        PyErr_Format(PyExc_TypeError, "expected file object");
         return NULL;
     }
-    if (!_PyVerify_fd(fd0)) {
-        PyErr_SetString(PyExc_RuntimeError, "dump() open file error, invalid fd.");
+    write_method = PyObject_GetAttrString(py_file, "write");
+    if (!PyCallable_Check(write_method)) {
+        Py_XDECREF(write_method);
+        PyErr_Format(PyExc_TypeError, "expected file object");
+        return NULL;
+    }
+
+    py_string = pyobj2pystring(py_json);
+    if (py_string == NULL) {
+        Py_XDECREF(write_method);
+        PyErr_SetString(PyExc_RuntimeError, "pyobj2pystring() error.");
         return NULL;
     }
 
-    fd1 = dup(fd0);
-    fp = fdopen(fd1, "wb");
-    if (!fp) {
-        return PyErr_SetFromErrno(PyExc_OSError);
+    write_arg = PyTuple_Pack(1, py_string);
+    if (write_arg == NULL) {
+        Py_XDECREF(write_method);
+        return NULL;
     }
 
-    pyobj2pystring_filestream(pyjson, fp);
+    if (PyObject_CallObject(write_method, write_arg) == NULL) {
+        Py_XDECREF(write_method);
+        Py_XDECREF(write_arg);
+        Py_XDECREF(py_string);
+        return NULL;
+    }
 
-    fclose(fp);
+    Py_XDECREF(write_method);
+    Py_XDECREF(write_arg);
+    Py_XDECREF(py_string);
 
     Py_RETURN_NONE;
 }
