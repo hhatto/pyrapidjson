@@ -243,6 +243,10 @@ class TestFileStream(unittest.TestCase):
         stream.seek(0)
         self.assertEqual("{\"test\":[1,\"hello\"]}", stream.read())
 
+    def test_dump_with_invalid_arg(self):
+        jsonobj = {"test": [1, "hello"]}
+        self.assertRaises(TypeError, rapidjson.dump, jsonobj, "")
+
     def test_load(self):
         jsonstr = b"""{"test": [1, "hello"]}"""
         fp = NamedTemporaryFile(delete=False)
@@ -254,6 +258,14 @@ class TestFileStream(unittest.TestCase):
         # teardown
         check_fp.close()
         os.remove(fp.name)
+
+    def test_load_simple(self):
+        jsonstr = b"""1"""
+        stream = StringIO()
+        stream.write(jsonstr)
+        stream.seek(0)
+        retobj = rapidjson.load(stream)
+        self.assertEqual(retobj, 1)
 
     def test_load_with_utf8(self):
         jsonstr = """{"test": [1, "こんにちは"]}"""
@@ -270,6 +282,14 @@ class TestFileStream(unittest.TestCase):
         check_fp.close()
         os.remove(fp.name)
 
+    def test_load_with_io_stringio(self):
+        jsonstr = b"""{"test": [1, "hello"]}"""
+        stream = StringIO()
+        stream.write(jsonstr)
+        stream.seek(0)
+        retobj = rapidjson.load(stream)
+        self.assertEqual(retobj["test"], [1, "hello"])
+
     def test_load_with_invalid_fp(self):
         jsonstr = b"""{"test": [1, "hello"]}"""
         fp = NamedTemporaryFile(delete=False)
@@ -277,6 +297,9 @@ class TestFileStream(unittest.TestCase):
         fp.close()
         check_fp = open(fp.name)
         check_fp.close()
-        self.assertRaises(RuntimeError, rapidjson.load, check_fp)
+        self.assertRaises(ValueError, rapidjson.load, check_fp)
         # teardown
         os.remove(fp.name)
+
+    def test_load_with_invalid_arg(self):
+        self.assertRaises(TypeError, rapidjson.load, "")
