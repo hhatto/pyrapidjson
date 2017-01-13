@@ -544,8 +544,15 @@ pyrapidjson_load(PyObject *self, PyObject *args, PyObject *kwargs)
         return NULL;
     }
 
+#ifdef PY3
+    PyObject *utf8_item;
+    utf8_item = PyUnicode_AsUTF8String(py_string);
+    text = PyBytes_AsString(utf8_item);
+#else
     text = PyString_AsString(py_string);
+#endif
     doc.Parse(text);
+
     if (doc.HasParseError()) {
         Py_XDECREF(read_method);
         Py_XDECREF(py_string);
@@ -556,7 +563,11 @@ pyrapidjson_load(PyObject *self, PyObject *args, PyObject *kwargs)
     Py_XDECREF(read_method);
     Py_XDECREF(py_string);
 
-    return _doc2pyobj(doc, text);
+    PyObject *ret = _doc2pyobj(doc, text);
+#ifdef PY3
+    Py_XDECREF(utf8_item);
+#endif
+    return ret;
 }
 
 

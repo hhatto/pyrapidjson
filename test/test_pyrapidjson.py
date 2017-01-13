@@ -260,7 +260,7 @@ class TestFileStream(unittest.TestCase):
         os.remove(fp.name)
 
     def test_load_simple(self):
-        jsonstr = b"""1"""
+        jsonstr = """1"""
         stream = StringIO()
         stream.write(jsonstr)
         stream.seek(0)
@@ -283,7 +283,7 @@ class TestFileStream(unittest.TestCase):
         os.remove(fp.name)
 
     def test_load_with_io_stringio(self):
-        jsonstr = b"""{"test": [1, "hello"]}"""
+        jsonstr = """{"test": [1, "hello"]}"""
         stream = StringIO()
         stream.write(jsonstr)
         stream.seek(0)
