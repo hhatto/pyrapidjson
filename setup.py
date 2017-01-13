@@ -24,7 +24,7 @@ setup(
     ext_modules=[
         Extension('rapidjson',
                   sources=['pyrapidjson/_pyrapidjson.cpp'],
-                  include_dirs=['./pyrapidjson/include/'],
+                  include_dirs=['./pyrapidjson/rapidjson/include/'],
                   #extra_compile_args=["-DDEBUG"],
                   )]
 )
