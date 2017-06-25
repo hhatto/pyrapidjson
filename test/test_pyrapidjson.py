@@ -236,6 +236,17 @@ class TestFileStream(unittest.TestCase):
         check_fp.close()
         os.remove(fp.name)
 
+    def test_dump_with_unicode(self):
+        jsonobj = {"test": [1, u"こんにちは"]}
+        fp = NamedTemporaryFile(mode='w', delete=False)
+        rapidjson.dump(jsonobj, fp)
+        fp.close()
+        check_fp = open(fp.name)
+        ret = json.load(check_fp)
+        self.assertEqual(jsonobj[u"test"][0], ret[u"test"][0])
+        check_fp.close()
+        os.remove(fp.name)
+
     def test_dump_with_invalid_fp(self):
         jsonobj = {"test": [1, "hello"]}
         fp = NamedTemporaryFile(mode='w', delete=False)
