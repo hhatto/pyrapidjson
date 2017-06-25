@@ -77,6 +77,13 @@ class TestDecodeSimple(unittest.TestCase):
         ret = rapidjson.loads(text)
         self.assertEqual(ret, {"hoge": None, "huga": 134})
 
+    def test_unicode(self):
+        text = '"は"'
+        ret = rapidjson.loads(text)
+        import json
+        ret = json.loads(text)
+        self.assertEqual(ret, u"は")
+
 
 class TestDecodeComplex(unittest.TestCase):
 
