@@ -13,3 +13,7 @@ clean:
 pypireg:
 	python setup.py register
 	python setup.py sdist upload
+
+setup:
+	git submodule init
+	git submodule update
