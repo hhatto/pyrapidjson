@@ -295,7 +295,10 @@ class TestFileStream(unittest.TestCase):
         fp.close()
         check_fp = open(fp.name)
         retobj = rapidjson.load(check_fp)
-        self.assertEqual(retobj["test"], [1, "こんにちは"])
+        if sys.version_info >= (3, ):
+            self.assertEqual(retobj["test"], [1, "こんにちは"])
+        else:
+            self.assertEqual(retobj["test"], [1, u"こんにちは"])
         # teardown
         check_fp.close()
         os.remove(fp.name)
