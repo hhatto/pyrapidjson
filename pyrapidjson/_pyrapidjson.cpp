@@ -144,7 +144,7 @@ static PyObject *
 _get_pyobj_from_array(rapidjson::Value::ConstValueIterator& doc,
                       PyObject *root)
 {
-    PyObject *obj;
+    PyObject *obj, *utf8item;
 
     switch (doc->GetType()) {
     case rapidjson::kObjectType:
@@ -168,8 +168,19 @@ _get_pyobj_from_array(rapidjson::Value::ConstValueIterator& doc,
         obj = PyBool_FromLong(0);
         break;
     case rapidjson::kStringType:
+#ifdef PY3
         obj = PyString_FromStringAndSize(doc->GetString(),
                                          doc->GetStringLength());
+#else
+        utf8item = PyUnicode_FromStringAndSize(doc->GetString(),
+                                               doc->GetStringLength());
+        if (utf8item) {
+            obj = utf8item;
+        } else {
+            obj = PyString_FromStringAndSize(doc->GetString(),
+                                         doc->GetStringLength());
+        }
+#endif
         break;
     case rapidjson::kNumberType:
         if (doc->IsDouble()) {
@@ -198,7 +209,7 @@ _get_pyobj_from_object(rapidjson::Value::ConstMemberIterator& doc,
                        PyObject *root,
                        const char *key)
 {
-    PyObject *obj;
+    PyObject *obj, *utf8item;
 
     switch (doc->value.GetType()) {
     case rapidjson::kObjectType:
@@ -222,8 +233,19 @@ _get_pyobj_from_object(rapidjson::Value::ConstMemberIterator& doc,
         obj = PyBool_FromLong(0);
         break;
     case rapidjson::kStringType:
+#ifdef PY3
         obj = PyString_FromStringAndSize(doc->value.GetString(),
                                          doc->value.GetStringLength());
+#else
+        utf8item = PyUnicode_FromStringAndSize(doc->value.GetString(),
+                                               doc->value.GetStringLength());
+        if (utf8item) {
+            obj = utf8item;
+        } else {
+            obj = PyString_FromStringAndSize(doc->value.GetString(),
+                                         doc->value.GetStringLength());
+        }
+#endif
         break;
     case rapidjson::kNumberType:
         if (doc->value.IsDouble()) {
@@ -294,21 +316,17 @@ pyobj2doc(PyObject *object, rapidjson::Value& doc, rapidjson::Document& root)
         doc.SetString(PyString_AsString(object), PyString_GET_SIZE(object));
     }
     else if (PyUnicode_Check(object)) {
-#ifdef PY3
-        PyObject *utf8_item;
-        utf8_item = PyUnicode_AsUTF8String(object);
+        PyObject *utf8_item = PyUnicode_AsUTF8String(object);
         if (!utf8_item) {
             PyErr_SetString(PyExc_RuntimeError, "codec error.");
             return false;
         }
-
-        doc.SetString(PyBytes_AsString(utf8_item),
-                      PyBytes_Size(utf8_item), root.GetAllocator());
-
-        Py_XDECREF(utf8_item);
+#ifdef PY3
+        doc.SetString(PyBytes_AsString(utf8_item), PyBytes_GET_SIZE(utf8_item), root.GetAllocator());
 #else
-        doc.SetString(PyBytes_AsString(object), PyBytes_GET_SIZE(object));
+        doc.SetString(PyString_AsString(utf8_item), PyString_GET_SIZE(utf8_item), root.GetAllocator());
 #endif
+        Py_XDECREF(utf8_item);
     }
     else if (PyTuple_Check(object)) {
         int len = PyTuple_Size(object), i;
@@ -378,21 +396,18 @@ pyobj2doc(PyObject *object, rapidjson::Document& doc)
         doc.SetString(PyString_AsString(object), PyString_GET_SIZE(object));
     }
     else if (PyUnicode_Check(object)) {
-#ifdef PY3
         PyObject *utf8_item;
         utf8_item = PyUnicode_AsUTF8String(object);
         if (!utf8_item) {
             PyErr_SetString(PyExc_RuntimeError, "codec error.");
             return false;
         }
-
-        doc.SetString(PyBytes_AsString(utf8_item),
-                      PyBytes_Size(utf8_item), doc.GetAllocator());
-
-        Py_XDECREF(utf8_item);
+#ifdef PY3
+        doc.SetString(PyBytes_AsString(utf8_item), PyBytes_GET_SIZE(utf8_item), doc.GetAllocator());
 #else
-        doc.SetString(PyBytes_AsString(object), PyBytes_GET_SIZE(object));
+        doc.SetString(PyString_AsString(utf8_item), PyString_GET_SIZE(utf8_item), doc.GetAllocator());
 #endif
+        Py_XDECREF(utf8_item);
     }
     else if (PyTuple_Check(object)) {
         int len = PyTuple_Size(object), i;
@@ -446,7 +461,7 @@ pyobj2pystring(PyObject *pyjson)
     }
 
     rapidjson::StringBuffer buffer;
-    rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
+    rapidjson::Writer<rapidjson::StringBuffer, rapidjson::Document::EncodingType, rapidjson::ASCII<> > writer(buffer);
     doc.Accept(writer);
     std::string s = buffer.GetString();
 
