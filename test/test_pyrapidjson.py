@@ -157,6 +157,11 @@ class TestEncodeSimple(unittest.TestCase):
         ret = rapidjson.dumps(jsonobj)
         self.assertEqual(ret, "[null]")
 
+    def test_tuple_size_one(self):
+        jsonobj = (None, )
+        ret = rapidjson.dumps(jsonobj)
+        self.assertEqual(ret, "[null]")
+
     def test_list_size_two(self):
         jsonobj = [False, -50.3]
         ret = rapidjson.dumps(jsonobj)
@@ -210,6 +215,11 @@ class TestEncodeComplex(unittest.TestCase):
         jsonobj = {"test": {"hello": ["world", "!!"]}}
         ret = rapidjson.dumps(jsonobj)
         self.assertEqual(ret, """{"test":{"hello":["world","!!"]}}""")
+
+    def test_tuple_in_dict(self):
+        jsonobj = {"test": (1, "hello")}
+        ret = rapidjson.dumps(jsonobj)
+        self.assertEqual(ret, """{"test":[1,"hello"]}""")
 
 
 class TestFileStream(unittest.TestCase):
