@@ -334,7 +334,7 @@ pyobj2doc(PyObject *object, rapidjson::Value& doc, rapidjson::Document& root)
         doc.SetArray();
         rapidjson::Value _v;
         for (i = 0; i < len; ++i) {
-            PyObject *elm = PyList_GetItem(object, i);
+            PyObject *elm = PyTuple_GetItem(object, i);
             if (false == pyobj2doc(elm, _v, root)) {
                 return false;
             }
@@ -414,7 +414,7 @@ pyobj2doc(PyObject *object, rapidjson::Document& doc)
         doc.SetArray();
         rapidjson::Value _v;
         for (i = 0; i < len; ++i) {
-            PyObject *elm = PyList_GetItem(object, i);
+            PyObject *elm = PyTuple_GetItem(object, i);
             if (false == pyobj2doc(elm, _v, doc)) {
                 return false;
             }
