@@ -133,7 +133,17 @@ _set_pyobj(PyObject *parent, PyObject *child, const char *key)
         }
     }
     else if (PyDict_Check(parent)) {
+#ifdef PY3
         PyDict_SetItemString(parent, key, child);
+#else
+        PyObject *utf8key;
+        utf8key = PyUnicode_FromString(key);
+        if (!utf8key) {
+            return;
+        }
+        PyDict_SetItem(parent, utf8key, child);
+        Py_DECREF(utf8key);
+#endif
         if (child && child != Py_None) {
             Py_XDECREF(child);
         }
@@ -484,7 +494,17 @@ _doc2pyobj(rapidjson::Document& doc, char *text)
         case 'n':
             Py_RETURN_NONE;
         case '"':
+#ifdef PY3
             return PyString_FromStringAndSize(text + 1, strlen(text) - 2);
+#else
+            PyObject *utf8item;
+            utf8item = PyUnicode_FromStringAndSize(text + 1, strlen(text) - 2);
+            if (utf8item) {
+                return utf8item;
+            } else {
+                return PyString_FromStringAndSize(text + 1, strlen(text) - 2);
+            }
+#endif
         default:
             is_float = 0;
             for (offset = 0; offset < strlen(text); offset++) {
