@@ -79,10 +79,11 @@ class TestDecodeSimple(unittest.TestCase):
 
     def test_unicode(self):
         text = '"は"'
-        ret = rapidjson.loads(text)
-        import json
-        ret = json.loads(text)
-        self.assertEqual(ret, u"は")
+        rapid_ret = rapidjson.loads(text)
+        std_ret = json.loads(text)
+        self.assertEqual(std_ret, u"は")
+        self.assertEqual(rapid_ret, u"は")
+        self.assertEqual(std_ret, rapid_ret)
 
 
 class TestDecodeComplex(unittest.TestCase):
@@ -101,6 +102,11 @@ class TestDecodeComplex(unittest.TestCase):
         text = """{"test": {"hello": "world"}}"""
         ret = rapidjson.loads(text)
         self.assertEqual(ret, {"test": {"hello": "world"}})
+
+    def test_dict_with_unicode(self):
+        text = '''{"は": "bc"}'''
+        ret = rapidjson.loads(text)
+        self.assertEqual(ret, {u"は": u"bc"})
 
 
 class TestDecodeFail(unittest.TestCase):
